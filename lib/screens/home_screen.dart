@@ -1,7 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:carousel_slider/carousel_slider.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../models/smoothie.dart';
 import '../utils/responsive_helper.dart';
 import 'detail_screen.dart';
@@ -14,451 +13,290 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _carouselIndex = 0;
-  final CarouselSliderController _carouselController =
-      CarouselSliderController();
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final isMobile = ResponsiveHelper.isMobile(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF4B5563),
-      body: SafeArea(
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF606A75), Color(0xFF454C55)],
-            ),
-          ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 32,
-              vertical: isMobile ? 12 : 24,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top right action icons
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.menu,
-                          color: Colors.white,
-                          size: ResponsiveHelper.getResponsiveFontSize(
-                            context,
-                            24,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.settings_outlined,
-                          color: Colors.white,
-                          size: ResponsiveHelper.getResponsiveFontSize(
-                            context,
-                            24,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+      backgroundColor: Colors.white,
+      extendBody: true,
+      body: Column(
+        children: [
+          // Decorated Top Bar
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFFFB3BA),
+                  const Color(0xFFFFB3BA).withOpacity(0.85),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFB3BA).withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
-
-                SizedBox(height: isMobile ? 12 : 20),
-
-                // Carousel Section
-                _buildCarouselSection(context),
-
-                SizedBox(height: isMobile ? 28 : 44),
-
-                // Vertical List Section (best seller + recommended)
-                _buildVerticalList(context),
               ],
             ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 20 : 32,
+                  vertical: isMobile ? 16 : 20,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Logo/Title
+                    Text(
+                      'Smoofy',
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.getResponsiveFontSize(
+                          context,
+                          32,
+                        ),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontStyle: FontStyle.italic,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.2),
+                            offset: const Offset(0, 2),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Action Icons
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications_outlined,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.shopping_bag_outlined,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+
+          // Scrollable Content
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: isMobile ? 24 : 32),
+
+                  // Categories Section
+                  _buildCategoriesSection(context),
+
+                  SizedBox(height: isMobile ? 24 : 32),
+
+                  // Most Popular Section
+                  _buildMostPopularSection(context),
+
+                  // Bottom padding to avoid content being hidden behind nav bar
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _buildCarouselSection(BuildContext context) {
+  Widget _buildCategoriesSection(BuildContext context) {
     final isMobile = ResponsiveHelper.isMobile(context);
-    final double height = ResponsiveHelper.getResponsiveHeight(
-      context,
-      mobile: 240,
-      tablet: 300,
-      desktop: 340,
-    );
+
+    final categories = [
+      {
+        'name': 'Juices',
+        'color': const Color(0xFF4A90E2),
+        'icon': Icons.local_drink,
+      },
+      {
+        'name': 'Smoothies',
+        'color': const Color(0xFFFFB3BA),
+        'icon': Icons.blender,
+      },
+      {
+        'name': 'Detox drinks',
+        'color': const Color(0xFF2D3436),
+        'icon': Icons.spa,
+      },
+      {
+        'name': 'Milk Shakes',
+        'color': const Color(0xFF8B7355),
+        'icon': Icons.cake,
+      },
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Featured smoothies',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: ResponsiveHelper.getResponsiveFontSize(context, 20),
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 12),
-        CarouselSlider.builder(
-          itemCount: smoothieList.length,
-          carouselController: _carouselController,
-          itemBuilder: (context, index, realIdx) {
-            final smoothie = smoothieList[index];
-            return _buildCarouselCard(context, smoothie, height);
-          },
-          options: CarouselOptions(
-            height: height,
-            viewportFraction: isMobile ? 0.88 : 0.5,
-            enlargeCenterPage: true,
-            enlargeFactor: 0.22,
-            enableInfiniteScroll: true,
-            autoPlay: true,
-            autoPlayInterval: const Duration(seconds: 4),
-            autoPlayAnimationDuration: const Duration(milliseconds: 700),
-            autoPlayCurve: Curves.easeInOutCubic,
-            onPageChanged: (i, reason) {
-              setState(() => _carouselIndex = i);
-            },
-          ),
-        ),
-        const SizedBox(height: 14),
-        Center(
-          child: AnimatedSmoothIndicator(
-            activeIndex: _carouselIndex,
-            count: smoothieList.length,
-            effect: ExpandingDotsEffect(
-              dotHeight: isMobile ? 7 : 9,
-              dotWidth: isMobile ? 7 : 9,
-              expansionFactor: 3.2,
-              activeDotColor: const Color(0xFF8B4A7C),
-              dotColor: Colors.white30,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 32),
+          child: Text(
+            'Categories',
+            style: TextStyle(
+              fontSize: ResponsiveHelper.getResponsiveFontSize(context, 28),
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFFFFB3BA),
             ),
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildCarouselCard(
-    BuildContext context,
-    Smoothie smoothie,
-    double height,
-  ) {
-    final isMobile = ResponsiveHelper.isMobile(context);
-    final cardWidth = ResponsiveHelper.getResponsiveWidth(
-      context,
-      mobile: MediaQuery.of(context).size.width - 40,
-      tablet: 520,
-      desktop: 600,
-    );
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                DetailScreen(smoothie: smoothie),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
-            transitionDuration: const Duration(milliseconds: 320),
-          ),
-        );
-      },
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            width: cardWidth,
-            margin: EdgeInsets.symmetric(
-              horizontal: isMobile ? 4 : 8,
-              vertical: 4,
-            ),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF636973), Color(0xFF565C65)],
-              ),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFF787E88), width: 0.8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.28),
-                  blurRadius: 22,
-                  offset: const Offset(0, 10),
-                ),
-                BoxShadow(
-                  color: Colors.white.withOpacity(0.06),
-                  blurRadius: 6,
-                  spreadRadius: -2,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(isMobile ? 16 : 24),
-              child: Row(
-                children: [
-                  // Left details
-                  Expanded(
-                    flex: 6,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          smoothie.name,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: ResponsiveHelper.getResponsiveFontSize(
-                              context,
-                              18,
-                            ),
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.25,
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 130,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 28),
+            physics: const BouncingScrollPhysics(),
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              final category = categories[index];
+              return GestureDetector(
+                onTap: () {
+                  // Handle category tap
+                },
+                child: Container(
+                  width: 100,
+                  margin: const EdgeInsets.only(right: 16, bottom: 8),
+                  child: Column(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              category['color'] as Color,
+                              (category['color'] as Color).withOpacity(0.8),
+                            ],
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          smoothie.ingredients.take(3).join('\n').toLowerCase(),
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.85),
-                            fontSize: ResponsiveHelper.getResponsiveFontSize(
-                              context,
-                              12,
-                            ),
-                            height: 1.22,
-                            letterSpacing: 0.15,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '\$${smoothie.price.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: ResponsiveHelper.getResponsiveFontSize(
-                              context,
-                              19,
-                            ),
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.4,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: const Text('Added to cart!'),
-                                      backgroundColor: const Color(0xFF8B4A7C),
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF8B4A7C),
-                                  foregroundColor: Colors.white,
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: isMobile ? 12 : 16,
-                                    vertical: isMobile ? 8 : 10,
-                                  ),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: Text(
-                                  'Add',
-                                  style: TextStyle(
-                                    fontSize:
-                                        ResponsiveHelper.getResponsiveFontSize(
-                                          context,
-                                          11,
-                                        ),
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (category['color'] as Color).withOpacity(
+                                0.4,
                               ),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                              spreadRadius: 0,
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              width: isMobile ? 36 : 40,
-                              height: isMobile ? 36 : 40,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white24,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.favorite_border,
-                                color: Colors.white,
-                                size: ResponsiveHelper.getResponsiveFontSize(
-                                  context,
-                                  18,
-                                ),
-                              ),
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Right image circle
-                  Expanded(
-                    flex: 5,
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: AspectRatio(
-                        aspectRatio: 1,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF7F848E), Color(0xFF5A616B)],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.32),
-                                blurRadius: 26,
-                                offset: const Offset(0, 9),
-                              ),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.all(isMobile ? 12 : 18),
-                            child: ClipOval(
-                              child: CachedNetworkImage(
-                                imageUrl: smoothie.imagePath,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Center(
-                                  child: CircularProgressIndicator(
-                                    color: const Color(0xFF8B4A7C),
-                                    strokeWidth: 2.4,
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) =>
-                                    _buildSmoothieImage(
-                                      color: const Color(0xFF8B4A7C),
-                                      height: height * 0.5,
-                                    ),
-                              ),
-                            ),
-                          ),
+                        child: Icon(
+                          category['icon'] as IconData,
+                          color: Colors.white,
+                          size: 40,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      Text(
+                        category['name'] as String,
+                        style: TextStyle(
+                          fontSize: ResponsiveHelper.getResponsiveFontSize(
+                            context,
+                            12,
+                          ),
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF2D3436),
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
-          if (smoothie.id == '1' || smoothie.category == 'featured')
-            Positioned(
-              top: 6,
-              right: 10,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.bookmark,
-                  color: const Color(0xFF8B4A7C),
-                  size: ResponsiveHelper.getResponsiveFontSize(context, 18),
-                ),
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildVerticalList(BuildContext context) {
+  Widget _buildMostPopularSection(BuildContext context) {
     final isMobile = ResponsiveHelper.isMobile(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Our best-seller',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: ResponsiveHelper.getResponsiveFontSize(context, 18),
-            fontWeight: FontWeight.w600,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 32),
+          child: Text(
+            'Most Popular',
+            style: TextStyle(
+              fontSize: ResponsiveHelper.getResponsiveFontSize(context, 24),
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF2D3436),
+            ),
           ),
         ),
         const SizedBox(height: 16),
-        _buildProductCard(context, smoothieList[0], isBookmarked: true),
-        const SizedBox(height: 24),
-        Text(
-          'Recommended for you',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: ResponsiveHelper.getResponsiveFontSize(context, 18),
-            fontWeight: FontWeight.w600,
-          ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 32),
+          itemCount: smoothieList.length > 5 ? 5 : smoothieList.length,
+          itemBuilder: (context, index) {
+            final smoothie = smoothieList[index];
+            return AnimatedOpacity(
+              opacity: 1.0,
+              duration: Duration(milliseconds: 300 + (index * 100)),
+              child: _buildMostPopularCard(context, smoothie),
+            );
+          },
         ),
-        const SizedBox(height: 16),
-        _buildProductCard(context, smoothieList[1], isBookmarked: false),
-        const SizedBox(height: 30),
+        const SizedBox(height: 20),
       ],
     );
   }
 
-  Widget _buildProductCard(
-    BuildContext context,
-    Smoothie smoothie, {
-    required bool isBookmarked,
-  }) {
-    final isMobile = ResponsiveHelper.isMobile(context);
-
+  Widget _buildMostPopularCard(BuildContext context, Smoothie smoothie) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -467,204 +305,168 @@ class _HomeScreenState extends State<HomeScreen> {
             pageBuilder: (context, animation, secondaryAnimation) =>
                 DetailScreen(smoothie: smoothie),
             transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
             transitionDuration: const Duration(milliseconds: 300),
           ),
         );
       },
       child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: Colors.white.withOpacity(0.95),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFFB3BA).withOpacity(0.15),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+              spreadRadius: 0,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Image Section with rating badge
             Stack(
               children: [
-                Container(
-                  height: ResponsiveHelper.getResponsiveHeight(
-                    context,
-                    mobile: 200,
-                    tablet: 250,
-                    desktop: 300,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: CachedNetworkImage(
+                    imageUrl: smoothie.imagePath,
+                    height: ResponsiveHelper.getResponsiveHeight(
+                      context,
+                      mobile: 220,
+                      tablet: 280,
+                      desktop: 320,
                     ),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0xFFE8E8ED), Color(0xFFF5F5F7)],
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
-                    child: CachedNetworkImage(
-                      imageUrl: smoothie.imagePath,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      placeholder: (context, url) => const Center(
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      height: ResponsiveHelper.getResponsiveHeight(
+                        context,
+                        mobile: 220,
+                        tablet: 280,
+                        desktop: 320,
+                      ),
+                      color: Colors.grey[200],
+                      child: const Center(
                         child: CircularProgressIndicator(
-                          color: Color(0xFF8B4A7C),
+                          color: Color(0xFFFFB3BA),
                         ),
                       ),
-                      errorWidget: (context, url, error) => Center(
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      height: ResponsiveHelper.getResponsiveHeight(
+                        context,
+                        mobile: 220,
+                        tablet: 280,
+                        desktop: 320,
+                      ),
+                      color: Colors.grey[200],
+                      child: Center(
                         child: _buildSmoothieImage(
-                          color: smoothie.id == '1'
-                              ? const Color(0xFF8B4A7C)
-                              : const Color(0xFF6B4423),
-                          height: ResponsiveHelper.getResponsiveHeight(
-                            context,
-                            mobile: 160,
-                            tablet: 200,
-                            desktop: 240,
-                          ),
+                          color: const Color(0xFFFFB3BA),
+                          height: 160,
                         ),
                       ),
                     ),
                   ),
                 ),
-                if (isBookmarked)
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.bookmark,
-                        color: const Color(0xFF8B4A7C),
-                        size: ResponsiveHelper.getResponsiveFontSize(
-                          context,
-                          20,
+                // Rating Badge
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
+                      ],
                     ),
-                  ),
-              ],
-            ),
-            Padding(
-              padding: EdgeInsets.all(isMobile ? 16 : 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    smoothie.name,
-                    style: TextStyle(
-                      color: const Color(0xFF8B4A7C),
-                      fontSize: ResponsiveHelper.getResponsiveFontSize(
-                        context,
-                        18,
-                      ),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    smoothie.description,
-                    style: TextStyle(
-                      color: const Color(0xFF6B7280),
-                      fontSize: ResponsiveHelper.getResponsiveFontSize(
-                        context,
-                        12,
-                      ),
-                      height: 1.4,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '\$${smoothie.price.toStringAsFixed(2)}',
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '4.8',
                           style: TextStyle(
-                            color: const Color(0xFF1F2937),
                             fontSize: ResponsiveHelper.getResponsiveFontSize(
                               context,
-                              20,
+                              14,
                             ),
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF2D3436),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.star,
+                          color: Color(0xFFFFC107),
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Label Badge (bottom left)
+                Positioned(
+                  bottom: 12,
+                  left: 12,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Fresh juice of',
+                        style: TextStyle(
+                          fontSize: ResponsiveHelper.getResponsiveFontSize(
+                            context,
+                            12,
+                          ),
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFB3BA),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          smoothie.name,
+                          style: TextStyle(
+                            fontSize: ResponsiveHelper.getResponsiveFontSize(
+                              context,
+                              14,
+                            ),
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Added to cart!'),
-                              backgroundColor: const Color(0xFF8B4A7C),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8B4A7C),
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isMobile ? 12 : 16,
-                            vertical: isMobile ? 8 : 10,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          'Add to cart',
-                          style: TextStyle(
-                            fontSize: ResponsiveHelper.getResponsiveFontSize(
-                              context,
-                              11,
-                            ),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: const Color(0xFFE5E7EB),
-                            width: 1,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.arrow_forward_ios,
-                          size: ResponsiveHelper.getResponsiveFontSize(
-                            context,
-                            12,
-                          ),
-                          color: const Color(0xFF6B7280),
-                        ),
-                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
@@ -730,40 +532,124 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF6B7280),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFFFB3BA).withOpacity(0.85),
+                  const Color(0xFFFFB3BA).withOpacity(0.75),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFB3BA).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildNavItem(Icons.home, 0),
+                    _buildNavItem(Icons.search, 1),
+                    _buildNavItem(Icons.favorite, 2),
+                    _buildNavItem(Icons.timer, 3),
+                    _buildNavItem(Icons.person, 4),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ],
+        ),
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Icon(
-                Icons.home,
-                color: const Color(0xFFE84A5F),
-                size: ResponsiveHelper.getResponsiveFontSize(context, 28),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, int index) {
+    final isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedIndex = index;
+        });
+        // Handle navigation based on index
+        switch (index) {
+          case 0:
+            // Home - already here
+            break;
+          case 1:
+            // Search
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Search page coming soon!'),
+                duration: Duration(seconds: 1),
               ),
-              Icon(
-                Icons.favorite_border,
-                color: Colors.white70,
-                size: ResponsiveHelper.getResponsiveFontSize(context, 28),
+            );
+            break;
+          case 2:
+            // Favorites
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Favorites page coming soon!'),
+                duration: Duration(seconds: 1),
               ),
-              Icon(
-                Icons.person_outline,
-                color: Colors.white70,
-                size: ResponsiveHelper.getResponsiveFontSize(context, 28),
+            );
+            break;
+          case 3:
+            // Timer/History
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('History page coming soon!'),
+                duration: Duration(seconds: 1),
               ),
-            ],
-          ),
+            );
+            break;
+          case 4:
+            // Profile
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile page coming soon!'),
+                duration: Duration(seconds: 1),
+              ),
+            );
+            break;
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: isSelected
+            ? BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              )
+            : null,
+        child: Icon(
+          icon,
+          color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
+          size: 24,
         ),
       ),
     );

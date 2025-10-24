@@ -9,9 +9,9 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF2B2B3D),
-      systemNavigationBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -34,12 +34,12 @@ class SmoothiePlusApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF8B4A7C),
-          brightness: Brightness.dark,
+          seedColor: const Color(0xFFFFB3BA),
+          brightness: Brightness.light,
         ),
         useMaterial3: true,
         fontFamily: 'Roboto',
-        scaffoldBackgroundColor: const Color(0xFF2B2B3D),
+        scaffoldBackgroundColor: Colors.white,
         // Enable smooth animations
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
